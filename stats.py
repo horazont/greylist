@@ -31,7 +31,7 @@ def do_data_greylist(cursor):
 def do_config_whitelist():
     do_config_for_listtype("whitelist",
                            order=["active", "inactive", "pending", "total"])
-    print("pending.label total")
+    print("pending.label pending")
     print("pending.draw AREA")
     print("pending.info Whitelist entries for which the hit count threshold has"
           " not been reached yet")
