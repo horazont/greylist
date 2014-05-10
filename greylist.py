@@ -25,7 +25,7 @@ auto_whitelist_threshold = 10
 
 # The time which has to pass since the first occurence of a greylisting triple
 # for mail to be accepted.
-greylist_timeout = 10
+greylist_timeout = 60
 
 # If the greylist database entry count supersedes this number, entries are
 # removed so that the limit is satisfied again. The entries are deleted in the
