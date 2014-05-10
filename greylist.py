@@ -29,6 +29,9 @@ del RESPONSE
 # these values are defaults. they can be configured by passing a INI-style
 # config file via --config, in the [DEFAULT] section
 
+# path to the db file
+db_file = "greylist.db"
+
 # If more than the given number of requests have been made by a given
 # client_name which have passed the greylisting check, the address is added to
 # the whitelist. Set this to None to disable auto-whitelisting.
@@ -118,8 +121,8 @@ def create_db(dbconn):
 def get_db():
     global _dbconn
     if _dbconn is None:
-        logger.debug("opening database")
-        _dbconn = sqlite3.connect("greylist.db",
+        logger.debug("opening database at %s", db_file)
+        _dbconn = sqlite3.connect(db_file,
                                   detect_types=sqlite3.PARSE_DECLTYPES)
         setup_db(_dbconn)
     return _dbconn
@@ -201,12 +204,17 @@ def gc_db():
         cursor.close()
 
 def load_config(f):
+    global db_file
     global auto_whitelist_threshold, max_greylist_entries
     global max_whitelist_entries, greylist_expire, whitelist_expire
     global stats_active_threshold, response_pass, response_fail
     config = configparser.ConfigParser()
     with f as f:
         config.read_file(f)
+
+    db_file = config.get(
+        "DEFAULT", "db_file",
+        fallback=db_file)
 
     auto_whitelist_threshold = getint_or_none(
         config,
