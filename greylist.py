@@ -66,8 +66,13 @@ SCHEMA[("index", "greylist_last_seen")] = """CREATE INDEX greylist_last_seen ON 
 _dbconn = None
 
 def clean_request(attrs):
-    if "client_name" not in attrs:
-        attrs["client_name"] = attrs["client_address"]
+    try:
+        client_name = attrs["client_name"]
+        if client_name == "unknown":
+            del attrs["client_name"]
+    except KeyError:
+        pass
+    attrs.set_default("client_name", attrs["client_address"])
     # make sure that critical attributes are in place
     attrs["sender"]
     attrs["recipient"]
