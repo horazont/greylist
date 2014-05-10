@@ -332,6 +332,10 @@ def _check_greylist(dbconn, cursor, sender, recipient, client_name):
         first_seen, = match
         logger.debug("greylist check: match, first_seen=%s", first_seen)
         delta = now - first_seen
+        cursor.execute("""UPDATE greylist
+        SET last_seen = ?
+        WHERE sender=? AND recipient=? AND client_name=?""",
+                       (now,) + key)
         if delta.total_seconds() >= greylist_timeout:
             logger.debug("greylist check: passed, increasing whitelist hit"
                           " counter")
@@ -343,11 +347,6 @@ UPDATE whitelist SET last_seen = ?, hit_count = hit_count + 1;""",
                            (now,))
             dbconn.commit()
             return PASSED
-        cursor.execute("""UPDATE greylist
-        SET last_seen = ?
-        WHERE sender=? AND recipient=? AND client_name=?""",
-                       (now,) + key)
-        dbconn.commit()
         logger.debug("greylist check: defer")
         return FAILED
 
