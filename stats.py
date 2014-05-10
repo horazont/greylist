@@ -1,40 +1,52 @@
 #!/usr/bin/python3
 from datetime import datetime, timedelta
 
-def do_config_for_listtype(listtype):
+def do_config_for_listtype(listtype, order):
     print("graph_title {} contents".format(listtype))
     print("graph_vlabel Entries")
     print("graph_category mail")
     print("graph_info Statistics about the activity of the {}".format(listtype))
-    print("graph_order active inactive total")
+    print("graph_order {}".format(", ".join(order)))
     print("active.label active")
     print("active.draw AREA")
     print("active.info Recently used entries in the {}".format(listtype))
     print("inactive.label inactive")
     print("inactive.draw STACK")
     print("inactive.info Stale entries in the {}".format(listtype))
+
+def do_config_greylist():
+    do_config_for_listtype("greylist",
+                           order=["active", "inactive", "total"])
     print("total.label total")
     print("total.draw LINE2")
-    print("total.info Total entries in the {}".format(listtype))
+    print("total.info Total entries in the greylist")
 
-def do_data_for_listtype(listtype, cursor):
-    active = get_active(listtype, cursor)
-    total = get_total(listtype, cursor)
+def do_data_greylist(cursor):
+    active = get_active_greylist(cursor)
+    total = get_total("greylist", cursor)
     print("active.value {}".format(active))
     print("inactive.value {}".format(total-active))
     print("total.value {}".format(total))
 
-def do_config_greylist():
-    do_config_for_listtype("greylist")
-
-def do_data_greylist(cursor):
-    do_data_for_listtype("greylist", cursor)
-
 def do_config_whitelist():
-    do_config_for_listtype("whitelist")
+    do_config_for_listtype("whitelist",
+                           order=["active", "inactive", "pending", "total"])
+    print("pending.label total")
+    print("pending.draw AREA")
+    print("pending.info Whitelist entries for which the hit count threshold has"
+          " not been reached yet")
+    print("total.label total")
+    print("total.draw LINE2")
+    print("total.info Total entries in the greylist")
 
 def do_data_whitelist(cursor):
-    do_data_for_listtype("whitelist", cursor)
+    active = get_active_whitelist(cursor)
+    pending = get_pending_whitelist(cursor)
+    total = get_total("whitelist", cursor)
+    print("active.value {}".format(active))
+    print("inactive.value {}".format(total-(active+pending)))
+    print("pending.value {}".format(pending))
+    print("total.value {}".format(total))
 
 def do_config_overview():
     print("graph_title Greylisting stats")
@@ -76,15 +88,31 @@ def get_total(listtype, cursor):
         """SELECT COUNT(*) FROM {}""".format(listtype)).fetchone()
     return total
 
-def get_active(listtype, cursor):
-    # listtype is not direct user input, so format is safe here
+def get_active_greylist(cursor):
     now = datetime.utcnow()
     active, = cursor.execute(
-        """SELECT COUNT(*) FROM {}
-        WHERE (julianday(?) - julianday(last_seen)) * 86400.0 <= ?""".format(
-            listtype),
+        """SELECT COUNT(*) FROM greylist
+        WHERE (julianday(?) - julianday(last_seen)) * 86400.0 <= ?""",
         (now, greylist.stats_active_threshold)).fetchone()
     return active
+
+def get_active_whitelist(cursor):
+    now = datetime.utcnow()
+    active, = cursor.execute(
+        """SELECT COUNT(*) FROM whitelist
+        WHERE (julianday(?) - julianday(last_seen)) * 86400.0 <= ?
+        AND hit_count >= ?""",
+        (now,
+         greylist.stats_active_threshold,
+         greylist.auto_whitelist_threshold)).fetchone()
+    return active
+
+def get_pending_whitelist(cursor):
+    pending, = cursor.execute(
+        """SELECT COUNT(*) FROM whitelist
+        WHERE hit_count < ?""",
+        (greylist.auto_whitelist_threshold,)).fetchone()
+    return pending
 
 def get_distinct_client_names(cursor):
     count, = cursor.execute(
@@ -183,10 +211,10 @@ if __name__ == "__main__":
     dbconn = greylist.get_db()
     cursor = dbconn.cursor()
 
-    for listtype in ["greylist", "whitelist"]:
-        print("total_{} {}".format(
-            listtype, get_total(listtype, cursor)))
-        print("active_{} {}".format(
-            listtype, get_active(listtype, cursor)))
+    print("total_greylist {}".format(get_total("greylist", cursor)))
+    print("active_greylist {}".format(get_active_greylist(cursor)))
+    print("total_whitelist {}".format(get_total("whitelist", cursor)))
+    print("active_whitelist {}".format(get_active_whitelist(cursor)))
+    print("pending_whitelist {}".format(get_pending_whitelist(cursor)))
     print("distinct_greylist_client_names {}".format(
         get_distinct_client_names(cursor)))
