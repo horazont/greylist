@@ -13,10 +13,14 @@ postfix. ``greylist.py`` has some advantages over ``greylist.pl``:
    greylisting database with its own entries, it serves as a Denial Of Service
    attack, because no mail from unknown destinations will be accepted anymore.
 
-   Setting the limit somewhat high (the defautl is 10000 entries in greylist
-   database) mitigiates this issue to a certain extent. It is planned, however,
-   to implement more sophisticated rules, for example installing limits based on
-   IP ranges or client_name:s in general.
+   To mitigiate this attack, ``greylist.py`` also supports soft-limiting for
+   each mail source. By setting this soft limit signifincantly lower than the
+   overall limit of the database, an attacker from only a single ``client_name``
+   cannot fill the whole database, and purging first happens per
+   ``client_name``, and only if that is not sufficient, entries from any
+   ``client_name`` are removed from the database, in the order they last
+   touched.
+
 3. There is a ``stats.py`` which extracts some statistics from the
    database. This can be useful to detect spam waves or just for graph
    awesomeness.
