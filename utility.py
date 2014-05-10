@@ -12,6 +12,8 @@ def show_greylist(args):
         sqlargs += (args.limit,)
     cursor = dbconn.execute(sql, sqlargs)
     rows = itertools.groupby(cursor, lambda x: x[3])
+    print("    {:5s} {:30s} ({})".format(
+        "id", "sender", "client name"))
     for recipient, items in rows:
         print("recipient: {}".format(recipient))
         for id, client_name, sender, _, first_seen, last_seen in items:
@@ -23,18 +25,21 @@ def show_greylist(args):
 def show_whitelist(args):
     dbconn = greylist.get_db()
     sqlargs = ()
-    sql = ("SELECT id, client_name, last_seen "
+    sql = ("SELECT id, client_name, last_seen, hit_count "
            "FROM whitelist "
            "ORDER BY client_name ASC, last_seen DESC")
     if args.limit is not None:
         sql += " LIMIT ?"
         sqlargs += (args.limit,)
     cursor = dbconn.execute(sql, sqlargs)
-    for id, client_name, last_seen in cursor:
-        print("#{:<4d} {:40s} {!s:20s}".format(
+    print("{:5s} {:40s} {:20s} {:4s}".format(
+        "id", "client name", "last seen", "hitc"))
+    for id, client_name, last_seen, hit_count in cursor:
+        print("#{:<4d} {:40s} {!s:20s} {:4d}".format(
             id,
             client_name,
-            last_seen.replace(microsecond=0)))
+            last_seen.replace(microsecond=0),
+            hit_count))
 
 if __name__ == "__main__":
     import argparse
