@@ -99,6 +99,9 @@ _dbconn = None
 def clean_request(attrs):
     if "client_name" not in attrs:
         attrs["client_name"] = attrs["client_address"]
+    # make sure that critical attributes are in place
+    attrs["sender"]
+    attrs["recipient"]
 
 def create_db(dbconn):
     logger.info("(re-)creating database")
@@ -420,11 +423,19 @@ if __name__ == "__main__":
 
     try:
         while True:
-            request = read_request(sys.stdin)
-            if request is None:
-                break
-
-            clean_request(request)
+            try:
+                request = read_request(sys.stdin)
+                if request is None:
+                    break
+                try:
+                    clean_request(request)
+                except KeyError as err:
+                    raise ValueError("Missing critical attribute: {}".format(err))
+            except ValueError as err:
+                logger.error("Malformed request: %s", err)
+                logger.warn("Returning PASS action")
+                print(response_pass)
+                continue
             response = process_request(request)
             if response == PASSED:
                 print(response_pass)
