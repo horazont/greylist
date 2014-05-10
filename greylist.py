@@ -340,11 +340,12 @@ def _check_greylist(dbconn, cursor, sender, recipient, client_name):
             logger.debug("greylist check: passed, increasing whitelist hit"
                           " counter")
             cursor.execute("""
-INSERT OR IGNORE INTO whitelist (client_name, hit_count) VALUES (?, 0);""",
+INSERT OR IGNORE INTO whitelist (client_name, hit_count) VALUES (?, 0)""",
                            (client_name, ))
             cursor.execute("""
-UPDATE whitelist SET last_seen = ?, hit_count = hit_count + 1;""",
-                           (now,))
+UPDATE whitelist SET last_seen = ?, hit_count = hit_count + 1
+WHERE client_name=?""",
+                           (now, client_name))
             dbconn.commit()
             return PASSED
         logger.debug("greylist check: defer")
