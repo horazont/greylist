@@ -20,9 +20,9 @@ def do_config_for_listtype(listtype):
 def do_data_for_listtype(listtype, cursor):
     active = get_active(listtype, cursor)
     total = get_total(listtype, cursor)
-    print("active {}".format(active))
-    print("inactive {}".format(total-active))
-    print("total {}".format(total))
+    print("active.value {}".format(active))
+    print("inactive.value {}".format(total-active))
+    print("total.value {}".format(total))
 
 def do_config_greylist():
     do_config_for_listtype("greylist")
@@ -51,9 +51,9 @@ def do_config_overview():
     print("whitelist.info Amount of entries in the whitelist")
 
 def do_data_overview(cursor):
-    print("greylist {}".format(
+    print("greylist.value {}".format(
         get_total("greylist", cursor)))
-    print("whitelist {}".format(
+    print("whitelist.value {}".format(
         get_total("whitelist", cursor)))
 
 def do_config_client_names():
@@ -67,7 +67,7 @@ def do_config_client_names():
     print("clientnames.info Distinct client names in the greylisting component")
 
 def do_data_client_names(cursor):
-    print("clientnames {}".format(
+    print("clientnames.value {}".format(
         get_distinct_client_names(cursor)))
 
 def get_total(listtype, cursor):
