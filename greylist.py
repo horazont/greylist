@@ -7,52 +7,19 @@ from datetime import datetime, timedelta
 
 # CONFIGURATION
 
-# greylisting happens on triples of (sender, recipient, client_name).
-# whitelisting happens on client_name
-# client name is either the client_name (hostname) supplied or the
-# client_address, if no name was supplied
+# See README.md for more details. Use a config file whenever possible instead of
+# changing the source code here, to make your own life easier on updates.
 
-# these values are defaults. they can be configured by passing a INI-style
-# config file via --config, in the [DEFAULT] section
-
-# path to the db file
 db_file = "greylist.db"
-
-# If more than the given number of requests have been made by a given
-# client_name which have passed the greylisting check, the address is added to
-# the whitelist. Set this to None to disable auto-whitelisting.
 auto_whitelist_threshold = 10
-
-# The time which has to pass since the first occurence of a greylisting triple
-# for mail to be accepted.
 greylist_timeout = 60
-
-# If the greylist database entry count supersedes this number, entries are
-# removed so that the limit is satisfied again. The entries are deleted in the
-# order of last_seen, from oldest to newest. Set to None to disable this limit.
 max_greylist_entries = 10000
-
-# Same as max_greylist_entries, but for whitelists.
 max_whitelist_entries = 1000
-
-# Greylist entries are removed if they have not been used after the given amount
-# of seconds. This will also remove entries from whitelisted domains, because
-# they are not touched while whitelisting is in place. Set this to None to
-# disable this limit.
 greylist_expire = None
-
-# Same as greylist_expire, but for the whitelist.
 whitelist_expire = None
-
-# Maximum time (in seconds) since last_seen for greylist and whitelist entries
-# to count as active
-stats_active_threshold = 3600
-
-# action=dunno will only permit if no other rule denies
 response_pass = "action=dunno\n"
-
-# action=defer_if_permit will defer the mail if no rule denies it
 response_fail = "action=defer_if_permit You have been greylisted.\n"
+stats_active_threshold = 3600
 
 # END OF CONFIGURATION
 
