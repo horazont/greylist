@@ -6,7 +6,7 @@ def do_config_for_listtype(listtype, order):
     print("graph_vlabel Entries")
     print("graph_category mail")
     print("graph_info Statistics about the activity of the {}".format(listtype))
-    print("graph_order {}".format(", ".join(order)))
+    print("graph_order {}".format(" ".join(order)))
     print("active.label active")
     print("active.draw AREA")
     print("active.info Recently used entries in the {}".format(listtype))
