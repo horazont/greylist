@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import configparser
 import logging
 import sqlite3
 
@@ -378,7 +379,6 @@ def verify_db(dbconn):
 
 if __name__ == "__main__":
     import argparse
-    import configparser
     import logging
     import sys
 
