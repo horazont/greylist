@@ -205,7 +205,7 @@ def gc_db():
 
 def load_config(f):
     global db_file
-    global auto_whitelist_threshold, max_greylist_entries
+    global auto_whitelist_threshold, greylist_timeout, max_greylist_entries
     global max_whitelist_entries, greylist_expire, whitelist_expire
     global stats_active_threshold, response_pass, response_fail
     config = configparser.ConfigParser()
@@ -220,6 +220,10 @@ def load_config(f):
         config,
         "DEFAULT", "auto_whitelist_threshold",
         fallback=auto_whitelist_threshold)
+
+    greylist_timeout = config.getint(
+        "DEFAULT", "greylist_timeout",
+        fallback=greylist_timeout)
 
     max_greylist_entries = getint_or_none(
         config,
