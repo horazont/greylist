@@ -57,6 +57,10 @@ if __name__ == "__main__":
             (now, greylist.stats_active_threshold)).fetchone()
         total_whitelist, = cursor.execute(
             """SELECT COUNT(*) FROM whitelist""").fetchone()
+        distinct_greylist_client_names, = cursor.execute(
+            """SELECT COUNT(*) FROM (
+                SELECT COUNT(*) FROM greylist GROUP BY client_name
+            )""").fetchone()
     finally:
         cursor.close()
         dbconn.close()
@@ -65,3 +69,5 @@ if __name__ == "__main__":
     print("total_greylist={}".format(total_greylist))
     print("active_whitelist={}".format(active_whitelist))
     print("total_whitelist={}".format(total_whitelist))
+    print("distinct_greylist_client_names={}".format(
+        distinct_greylist_client_names))
