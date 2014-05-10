@@ -13,7 +13,8 @@ from datetime import datetime, timedelta
 db_file = "greylist.db"
 auto_whitelist_threshold = 10
 greylist_timeout = 60
-max_greylist_entries = 10000
+max_greylist_entries = 100000
+max_greylist_entries_per_client_name = 1000
 max_whitelist_entries = 1000
 greylist_expire = None
 whitelist_expire = None
@@ -144,6 +145,32 @@ def gc_db():
         if dbconn.in_transaction:
             dbconn.commit()
 
+        cursor.execute("SELECT COUNT(*) FROM greylist")
+        greylist_count, = cursor.fetchone()
+
+        # only trigger if the limit is set, and either the global limit is unset
+        # or it has been surpassed
+        if (max_greylist_entries_per_client_name is not None
+            and (max_greylist_entries is None
+                 or greylist_count > max_greylist_entries)):
+            cursor.execute("""SELECT client_name, COUNT(*) as count
+            FROM greylist
+            GROUP BY client_name
+            HAVING count > ?""",
+                           (max_greylist_entries_per_client_name,))
+            results = list(cursor)
+            for client_name, count in results:
+                logging.warn("client_name=%r crossed entry limit, count=%s",
+                             client_name, count)
+                to_purge = count - max_greylist_entries_per_client_name
+                cursor.execute("""DELETE FROM greylist
+                WHERE id IN (SELECT id FROM greylist
+                             WHERE client_name=?
+                             ORDER BY last_seen DESC LIMIT ?)""",
+                               (client_name, to_purge))
+                logger.info("purged %s entries from client_name=%r",
+                            cursor.rowcount, client_name)
+
         if max_greylist_entries is not None:
             cursor.execute("SELECT COUNT(*) FROM greylist")
             count, = cursor.fetchone()
@@ -179,6 +206,7 @@ def load_config(f):
     global auto_whitelist_threshold, greylist_timeout, max_greylist_entries
     global max_whitelist_entries, greylist_expire, whitelist_expire
     global stats_active_threshold, response_pass, response_fail
+    global max_greylist_entries_per_client_name
     config = configparser.ConfigParser()
     with f as f:
         config.read_file(f)
@@ -200,6 +228,11 @@ def load_config(f):
         config,
         "DEFAULT", "max_greylist_entries",
         fallback=max_greylist_entries)
+
+    max_greylist_entries_per_client_name = getint_or_none(
+        config,
+        "DEFAULT", "max_greylist_entries_per_client_name",
+        fallback=max_greylist_entries_per_client_name)
 
     max_whitelist_entries = getint_or_none(
         config,

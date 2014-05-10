@@ -64,13 +64,27 @@ If more than ``auto_whitelist_threshold`` mails have passed the greylisting test
 from one ``client_name`` source, it will be added to the whitelist, surpassing
 any further greylisting tests.
 
-    max_greylist_entries = 10000
+    max_greylist_entries = 100000
     max_whitelist_entries = 1000
 
 If this is not set to None, if the respective list grows beyond that limit, any
 excessive entries will be removed from the database during database garbage
 collection. When doing this, ``greylist.py`` will start deletion with the least
 recently used entry, so that active entries are preserved.
+
+    max_greylist_entries_per_client_name = 1000
+
+If this is not set to None, a separate limit is imposed for each ``client_name``
+in the greylist -- this is a first line of defense against the attack mentioned
+in the preface. If a ``client_name`` has more than this amount of greylist
+entries, purging for only that client name takes place, leaving other entries
+intact. This limit is applied before the general limit. If the general limit is
+enabled, then this limit will only be applied if the general limit is already
+surpassed.
+
+For this limit, deletions are performed in the **reverse** order, that is, newer
+entries are deleted before older ones. This prevents that a legitimate bulk mail
+transfer gets stuck in a defer loop.
 
     greylist_expire = None
     whitelist_expire = None
