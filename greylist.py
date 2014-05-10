@@ -18,8 +18,8 @@ max_greylist_entries_per_client_name = 1000
 max_whitelist_entries = 1000
 greylist_expire = None
 whitelist_expire = None
-response_pass = "action=dunno\n"
-response_fail = "action=defer_if_permit You have been greylisted.\n"
+response_pass = "action=dunno\n\n"
+response_fail = "action=defer_if_permit You have been greylisted.\n\n"
 stats_active_threshold = 3600
 
 # END OF CONFIGURATION
