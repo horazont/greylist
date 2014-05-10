@@ -4,21 +4,6 @@ import sqlite3
 
 from datetime import datetime, timedelta
 
-class RESPONSE:
-    def __init__(self, name):
-        self.name = name
-
-    def __str__(self):
-        return self.name
-
-    def __repr__(self):
-        return "<response={}>".format(self.name)
-
-PASSED = RESPONSE("PASSED")
-FAILED = RESPONSE("FAILED")
-
-del RESPONSE
-
 # CONFIGURATION
 
 # greylisting happens on triples of (sender, recipient, client_name).
@@ -69,6 +54,21 @@ response_pass = "action=dunno\n"
 response_fail = "action=defer_if_permit You have been greylisted.\n"
 
 # END OF CONFIGURATION
+
+class RESPONSE:
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return "<response={}>".format(self.name)
+
+PASSED = RESPONSE("PASSED")
+FAILED = RESPONSE("FAILED")
+
+del RESPONSE
 
 SCHEMA = {}
 SCHEMA[("table", "whitelist")] = """CREATE TABLE whitelist
