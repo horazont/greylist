@@ -427,6 +427,9 @@ if __name__ == "__main__":
                 request = read_request(sys.stdin)
                 if request is None:
                     break
+                if not request:
+                    # ignore empty requests
+                    continue
                 try:
                     clean_request(request)
                 except KeyError as err:
@@ -443,7 +446,9 @@ if __name__ == "__main__":
                 print(response_fail)
             else:
                 raise AssertionError("Programming error")
-
+            # make sure everything is flushed, before doing potentially time
+            # consuming GC work
+            sys.stdout.flush()
             gc_db()
     except KeyboardInterrupt:
         pass
