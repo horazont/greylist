@@ -72,7 +72,7 @@ def clean_request(attrs):
             del attrs["client_name"]
     except KeyError:
         pass
-    attrs.set_default("client_name", attrs["client_address"])
+    attrs.setdefault("client_name", attrs["client_address"])
     # make sure that critical attributes are in place
     attrs["sender"]
     attrs["recipient"]
