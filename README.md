@@ -68,6 +68,14 @@ If more than ``auto_whitelist_threshold`` mails have passed the greylisting test
 from one ``client_name`` source, it will be added to the whitelist, surpassing
 any further greylisting tests.
 
+    move_to_whitelist = True
+
+If this setting is set to True, all existing greylist entries for a
+``client_name`` which is getting auto-whitelisted will be deleted from the
+greylist. This helps to keep the greylist clean, but is not recommended if
+whitelist entries expire (because the reputation from the greylist entries is
+lost) and greylist entries do not.
+
     max_greylist_entries = 100000
     max_whitelist_entries = 1000
 

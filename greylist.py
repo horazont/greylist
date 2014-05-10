@@ -21,6 +21,7 @@ whitelist_expire = None
 response_pass = "action=dunno\n\n"
 response_fail = "action=defer_if_permit You have been greylisted.\n\n"
 stats_active_threshold = 3600
+move_to_whitelist = True
 
 # END OF CONFIGURATION
 
@@ -89,6 +90,13 @@ def create_db(dbconn):
         logger.info("creating index %s", index)
         dbconn.execute(sql)
         logger.info("created index %s", index)
+
+def close_db():
+    global _dbconn
+    if _dbconn is None:
+        return
+    _dbconn.close()
+    _dbconn = None
 
 def get_db():
     global _dbconn
@@ -160,8 +168,8 @@ def gc_db():
                            (max_greylist_entries_per_client_name,))
             results = list(cursor)
             for client_name, count in results:
-                logging.warn("client_name=%r crossed entry limit, count=%s",
-                             client_name, count)
+                logger.warning("client_name=%r crossed entry limit, count=%s",
+                               client_name, count)
                 to_purge = count - max_greylist_entries_per_client_name
                 cursor.execute("""DELETE FROM greylist
                 WHERE id IN (SELECT id FROM greylist
@@ -206,7 +214,7 @@ def load_config(f):
     global auto_whitelist_threshold, greylist_timeout, max_greylist_entries
     global max_whitelist_entries, greylist_expire, whitelist_expire
     global stats_active_threshold, response_pass, response_fail
-    global max_greylist_entries_per_client_name
+    global max_greylist_entries_per_client_name, move_to_whitelist
     config = configparser.ConfigParser()
     with f as f:
         config.read_file(f)
@@ -264,6 +272,10 @@ def load_config(f):
         "DEFAULT", "response_fail",
         fallback=response_fail)
 
+    move_to_whitelist = config.getboolean(
+        "DEFAULT", "move_to_whitelist",
+        fallback=move_to_whitelist)
+
 def read_request(instream):
     attrs = {}
     for line in map(str.strip, instream):
@@ -277,17 +289,20 @@ def read_request(instream):
         return None
     return attrs
 
-def _check_whitelist(cursor, client_name):
+def _check_whitelist(dbconn, cursor, client_name):
     if auto_whitelist_threshold is not None:
         cursor.execute("SELECT hit_count FROM whitelist WHERE client_name=?",
                        (client_name,))
-        match = cursor.fetchone()
-        if match is not None:
-            hit_count, = match
-            if hit_count >= auto_whitelist_threshold:
-                logger.debug("whitelist check: client_name=%r succeeded",
-                              client_name)
-                return True
+        match = cursor.fetchone() or (0,)
+        hit_count, = match
+        if hit_count >= auto_whitelist_threshold:
+            logger.debug("whitelist check: client_name=%r succeeded",
+                         client_name)
+            if hit_count == auto_whitelist_threshold and move_to_whitelist:
+                cursor.execute("DELETE FROM greylist WHERE client_name=?",
+                               (client_name,))
+                dbconn.commit()
+            return True
     return False
 
 def _check_greylist(dbconn, cursor, sender, recipient, client_name):
@@ -342,7 +357,7 @@ def process_request(attrs):
 
         logger.debug("processing request: sender=%r, recipient=%r, client_name=%r",
                       sender, recipient, client_name)
-        if _check_whitelist(cursor, client_name):
+        if _check_whitelist(dbconn, cursor, client_name):
             return PASSED
 
         return _check_greylist(dbconn, cursor, sender, recipient, client_name)
@@ -354,7 +369,7 @@ def setup_db(dbconn):
         verify_db(dbconn)
         logger.info("database schema verified successfully")
     except ValueError as err:
-        logger.warn("database schema has errors: %s", err)
+        logger.warning("database schema has errors: %s", err)
         create_db(dbconn)
 
 def verify_db(dbconn):
@@ -366,7 +381,7 @@ def verify_db(dbconn):
                 continue
             try:
                 if sql != SCHEMA[(type_, name)]:
-                    logger.warn("verifying: sql schema differs. found %r", sql)
+                    logger.warning("verifying: sql schema differs. found %r", sql)
                     logger.info("verifying: expected %r", SCHEMA[(type_, name)])
                     raise ValueError("Schema differs")
             except KeyError as err:
@@ -436,7 +451,7 @@ if __name__ == "__main__":
                     raise ValueError("Missing critical attribute: {}".format(err))
             except ValueError as err:
                 logger.error("Malformed request: %s", err)
-                logger.warn("Returning PASS action")
+                logger.warning("Returning PASS action")
                 print(response_pass)
                 continue
             response = process_request(request)
