@@ -13,7 +13,7 @@ def do_config_for_listtype(listtype):
     print("inactive.label inactive")
     print("inactive.draw STACK")
     print("inactive.info Stale entries in the {}".format(listtype))
-    print("total.label Total entries")
+    print("total.label total")
     print("total.draw LINE2")
     print("total.info Total entries in the {}".format(listtype))
 
