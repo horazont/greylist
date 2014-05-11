@@ -16,7 +16,7 @@ def do_config_for_listtype(listtype, order):
 
 def do_config_greylist():
     do_config_for_listtype("greylist",
-                           order=["active", "inactive", "dead", "total"])
+                           order=["dead", "inactive", "active", "total"])
     print("dead.label dead")
     print("dead.draw STACK")
     print("dead.info Entries which have not been touched since their creation"
@@ -36,7 +36,7 @@ def do_data_greylist(cursor):
 
 def do_config_whitelist():
     do_config_for_listtype("whitelist",
-                           order=["active", "inactive", "pending", "total"])
+                           order=["inactive", "active", "pending", "total"])
     print("pending.label pending")
     print("pending.draw STACK")
     print("pending.info Whitelist entries for which the hit count threshold has"
