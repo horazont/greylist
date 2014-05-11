@@ -7,20 +7,20 @@ def do_config_for_listtype(listtype, order):
     print("graph_category mail")
     print("graph_info Statistics about the activity of the {}".format(listtype))
     print("graph_order {}".format(" ".join(order)))
-    print("active.label active")
-    print("active.draw AREA")
-    print("active.info Recently used entries in the {}".format(listtype))
-    print("inactive.label inactive")
-    print("inactive.draw STACK")
-    print("inactive.info Stale entries in the {}".format(listtype))
 
 def do_config_greylist():
     do_config_for_listtype("greylist",
                            order=["dead", "inactive", "active", "total"])
     print("dead.label dead")
-    print("dead.draw STACK")
+    print("dead.draw AREA")
     print("dead.info Entries which have not been touched since their creation"
           " and are older than {} seconds".format(greylist.stats_dead_threshold))
+    print("inactive.label inactive")
+    print("inactive.draw STACK")
+    print("inactive.info Stale entries in the greylist")
+    print("active.label active")
+    print("active.draw STACK")
+    print("active.info Recently used entries in the greylist")
     print("total.label total")
     print("total.draw LINE2")
     print("total.info Total entries in the greylist")
@@ -37,6 +37,12 @@ def do_data_greylist(cursor):
 def do_config_whitelist():
     do_config_for_listtype("whitelist",
                            order=["inactive", "active", "pending", "total"])
+    print("inactive.label inactive")
+    print("inactive.draw AREA")
+    print("inactive.info Stale entries in the whitelist")
+    print("active.label active")
+    print("active.draw STACK")
+    print("active.info Recently used entries in the whitelist")
     print("pending.label pending")
     print("pending.draw STACK")
     print("pending.info Whitelist entries for which the hit count threshold has"
