@@ -107,10 +107,13 @@ collection. This happens before enforcing the max limit and is independent of
 the max limit.
 
     stats_active_threshold = 3600
+    stats_dead_threshold = 86400
 
-This is only relevant for ``stats.py``: This is the time interval in seconds
-during which entries in any list are considered active. Entries which have not
-been used for more than that time interval are not considered active.
+This is only relevant for ``stats.py``: This first is the time interval in
+seconds during which entries in any list are considered active. Entries which
+have not been used for more than that time interval are not considered
+active. Entries which are older than the ``stats_dead_threshold`` and have not
+been seen since their first occurence are considered dead.
 
     response_pass = "action=dunno\n"
     response_fail = "action=defer_if_permit You have been greylisted.\n"

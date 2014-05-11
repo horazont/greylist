@@ -21,7 +21,9 @@ whitelist_expire = None
 response_pass = "action=dunno\n\n"
 response_fail = "action=defer_if_permit You have been greylisted.\n\n"
 stats_active_threshold = 3600
+stats_dead_threshold = 86400
 move_to_whitelist = True
+whitelist_prefixes = []
 
 # END OF CONFIGURATION
 
@@ -220,6 +222,7 @@ def load_config(f):
     global max_whitelist_entries, greylist_expire, whitelist_expire
     global stats_active_threshold, response_pass, response_fail
     global max_greylist_entries_per_client_name, move_to_whitelist
+    global stats_dead_threshold
     config = configparser.ConfigParser()
     with f as f:
         config.read_file(f)
@@ -266,6 +269,11 @@ def load_config(f):
         config,
         "DEFAULT", "stats_active_threshold",
         fallback=stats_active_threshold)
+
+    stats_dead_threshold = getint_or_none(
+        config,
+        "DEFAULT", "stats_dead_threshold",
+        fallback=stats_dead_threshold)
 
     response_pass = getint_or_none(
         config,

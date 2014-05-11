@@ -16,7 +16,11 @@ def do_config_for_listtype(listtype, order):
 
 def do_config_greylist():
     do_config_for_listtype("greylist",
-                           order=["active", "inactive", "total"])
+                           order=["active", "inactive", "dead", "total"])
+    print("dead.label dead")
+    print("dead.draw STACK")
+    print("dead.info Entries which have not been touched since their creation"
+          " and are older than {} seconds".format(greylist.stats_dead_threshold))
     print("total.label total")
     print("total.draw LINE2")
     print("total.info Total entries in the greylist")
@@ -24,8 +28,10 @@ def do_config_greylist():
 def do_data_greylist(cursor):
     active = get_active_greylist(cursor)
     total = get_total("greylist", cursor)
+    dead = get_dead_greylist(cursor)
+    print("dead.value {}".format(dead))
     print("active.value {}".format(active))
-    print("inactive.value {}".format(total-active))
+    print("inactive.value {}".format(total-(active+dead)))
     print("total.value {}".format(total))
 
 def do_config_whitelist():
@@ -106,6 +112,16 @@ def get_active_whitelist(cursor):
          greylist.stats_active_threshold,
          greylist.auto_whitelist_threshold)).fetchone()
     return active
+
+def get_dead_greylist(cursor):
+    now = datetime.utcnow()
+    dead, = cursor.execute(
+        """SELECT COUNT(*) FROM greylist
+        WHERE (julianday(?) - julianday(last_seen)) * 86400.0 >= ?
+        AND last_seen = first_seen""",
+        (now,
+         greylist.stats_dead_threshold)).fetchone()
+    return dead
 
 def get_pending_whitelist(cursor):
     pending, = cursor.execute(
@@ -213,6 +229,7 @@ if __name__ == "__main__":
 
     print("total_greylist {}".format(get_total("greylist", cursor)))
     print("active_greylist {}".format(get_active_greylist(cursor)))
+    print("dead_greylist {}".format(get_dead_greylist(cursor)))
     print("total_whitelist {}".format(get_total("whitelist", cursor)))
     print("active_whitelist {}".format(get_active_whitelist(cursor)))
     print("pending_whitelist {}".format(get_pending_whitelist(cursor)))
