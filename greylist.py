@@ -311,6 +311,10 @@ def _check_whitelist(dbconn, cursor, client_name):
         if hit_count >= auto_whitelist_threshold:
             logger.debug("whitelist check: client_name=%r succeeded",
                          client_name)
+            cursor.execute("""UPDATE whitelist
+                              SET hit_count = hit_count + 1, last_seen = ?
+                              WHERE client_name = ?""",
+                           (datetime.utcnow(), client_name))
             if hit_count == auto_whitelist_threshold and move_to_whitelist:
                 cursor.execute("DELETE FROM greylist WHERE client_name=?",
                                (client_name,))
