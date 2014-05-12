@@ -110,6 +110,22 @@ def do_data_client_names(cursor):
     print("clientnames.value {}".format(
         get_distinct_client_names(cursor)))
 
+def do_config_overhead():
+    print("graph_title Greylist database overhead")
+    print("graph_vlabel bytes/entry")
+    print("graph_category mail")
+    print("graph_info Plot the amount of bytes per entry in the greylisting database. Whitelist and Greylist entries are counted equally.")
+    print("graph_args --base 1024")
+    print("graph_order efficiency")
+    print("efficiency.label efficiency")
+    print("efficiency.draw LINE1")
+    print("efficiency.info Ratio of database size and entry count.")
+
+def do_data_overhead(cursor):
+    count = get_total("greylist", cursor) + get_total("whitelist", cursor)
+    efficiency = get_db_size() / count
+    print("efficiency.value {:.4f}".format(efficiency))
+
 def get_total(listtype, cursor):
     # listtype is not direct user input, so format is safe here
     total, = cursor.execute(
@@ -169,7 +185,8 @@ graph_types = {
     "whitelist": (do_config_whitelist, do_data_whitelist),
     "overview": (do_config_overview, do_data_overview),
     "client_names": (do_config_client_names, do_data_client_names),
-    "size": (do_config_size, do_data_size)
+    "size": (do_config_size, do_data_size),
+    "overhead": (do_config_overhead, do_data_overhead)
 }
 
 if __name__ == "__main__":
