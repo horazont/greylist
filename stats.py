@@ -103,7 +103,7 @@ def do_config_client_names():
     print("graph_info Distinct client names in the greylisting component")
     print("graph_order clientnames")
     print("clientnames.label clientnames")
-    print("clientnames.draw LINE2")
+    print("clientnames.draw LINE1")
     print("clientnames.info Distinct client names in the greylisting component")
 
 def do_data_client_names(cursor):
