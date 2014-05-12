@@ -1,5 +1,21 @@
 #!/usr/bin/python3
+import binascii
 import itertools
+import random
+
+_anon_dict = {}
+_anon_rng = random.SystemRandom()
+
+def anon_address(addr):
+    global _anon_dict, _anon_rng
+    try:
+        return _anon_dict[addr]
+    except KeyError:
+        localpart, at, remotepart = addr.partition("@")
+        randkey = binascii.b2a_hex(
+            _anon_rng.getrandbits(48).to_bytes(6, 'little')).decode()
+        _anon_dict[addr] = randkey+at+remotepart
+        return _anon_dict[addr]
 
 def show_greylist(args):
     dbconn = greylist.get_db()
@@ -15,10 +31,10 @@ def show_greylist(args):
     print("    {:5s} {:30s} ({})".format(
         "id", "sender", "client name"))
     for recipient, items in rows:
-        print("recipient: {}".format(recipient))
+        print("recipient: {}".format(args.anonymizer(recipient)))
         for id, client_name, sender, _, first_seen, last_seen in items:
             print("    #{:<4d} {:30s} (from {})\n        first: {}\n        last:  {}".format(
-                id, sender, client_name,
+                id, args.anonymizer(sender), client_name,
                 first_seen.replace(microsecond=0),
                 last_seen.replace(microsecond=0)))
 
@@ -62,6 +78,13 @@ if __name__ == "__main__":
         type=argparse.FileType("r"),
         metavar="FILE",
         help="Specify a config file to override defaults")
+    parser.add_argument(
+        "--deanon",
+        dest="anon",
+        default=True,
+        action="store_false",
+        help="If set, email addresses will be shown in full, instead"
+        " of anonymized")
     subcommands = parser.add_subparsers(
         title="Commands")
 
@@ -82,6 +105,10 @@ if __name__ == "__main__":
         metavar="COUNT")
 
     args = parser.parse_args()
+    if args.anon:
+        args.anonymizer = anon_address
+    else:
+        args.anonymizer = lambda x: x
 
     verbosity = {
         0: logging.ERROR,
