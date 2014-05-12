@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 from datetime import datetime, timedelta
+import os
+import stat
 
 def do_config_for_listtype(listtype, order):
     print("graph_title {} contents".format(listtype))
@@ -80,6 +82,20 @@ def do_data_overview(cursor):
     print("whitelist.value {}".format(
         get_total("whitelist", cursor)))
 
+def do_config_size():
+    print("graph_title greylisting database size")
+    print("graph_vlabel bytes")
+    print("graph_category mail")
+    print("graph_info Size of the greylisting sqlite database")
+    print("graph_args --base 1024")
+    print("graph_order size")
+    print("size.label size")
+    print("size.draw LINE1")
+    print("size.info Size of the SQLite file")
+
+def do_data_size(cursor):
+    print("size.value {}".format(get_db_size()))
+
 def do_config_client_names():
     print("graph_title Distinct client names")
     print("graph_vlabel Names")
@@ -143,11 +159,17 @@ def get_distinct_client_names(cursor):
         )""").fetchone()
     return count
 
+def get_db_size():
+    greylist.close_db()
+    st = os.stat(greylist.db_file)
+    return st.st_size
+
 graph_types = {
     "greylist": (do_config_greylist, do_data_greylist),
     "whitelist": (do_config_whitelist, do_data_whitelist),
     "overview": (do_config_overview, do_data_overview),
-    "client_names": (do_config_client_names, do_data_client_names)
+    "client_names": (do_config_client_names, do_data_client_names),
+    "size": (do_config_size, do_data_size)
 }
 
 if __name__ == "__main__":
@@ -241,3 +263,4 @@ if __name__ == "__main__":
     print("pending_whitelist {}".format(get_pending_whitelist(cursor)))
     print("distinct_greylist_client_names {}".format(
         get_distinct_client_names(cursor)))
+    print("db_size {}".format(get_db_size()))
